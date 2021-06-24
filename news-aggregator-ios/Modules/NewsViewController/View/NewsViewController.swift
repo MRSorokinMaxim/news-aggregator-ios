@@ -3,6 +3,7 @@ import TableKit
 
 protocol NewsModuleInput: AnyObject {
     func configureTableView()
+    func refresh(isEnabled: Bool)
 }
 
 final class NewsViewController: UIViewController, NewsModuleInput {
@@ -30,7 +31,7 @@ final class NewsViewController: UIViewController, NewsModuleInput {
     }
 
     override func loadView() {
-      view = NewsView()
+        view = NewsView()
     }
     
     override func viewDidLoad() {
@@ -39,12 +40,37 @@ final class NewsViewController: UIViewController, NewsModuleInput {
         view.backgroundColor = .white
         title = "common_global_news".localized
         
-        viewModel.loadContent()
+        configureTableView()
+        refreshData()
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        
+        rootView.refreshControl?.endRefreshing()
     }
     
     func configureTableView() {
         tableDirector.clear()
             .append(sections: newsBuilder.buildSections(from: viewModel))
             .reload()
+    }
+    
+    func refresh(isEnabled: Bool) {
+        if isEnabled {
+            rootView.refreshControl?.beginRefreshing()
+        } else {
+            rootView.refreshControl?.endRefreshing()
+        }
+    }
+    
+    @objc private func refreshData() {
+        viewModel.loadContent()
+    }
+    
+    private func bindView() {
+        rootView.refreshControl?.addTarget(self,
+                                           action: #selector(refreshData),
+                                           for: .valueChanged)
     }
 }

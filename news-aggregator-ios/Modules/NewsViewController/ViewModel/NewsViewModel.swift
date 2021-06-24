@@ -1,16 +1,28 @@
 import Foundation
 
-final class NewsViewModel: LoadingViewModel {
+protocol NewsViewModel: NewsBuilderDataSource {
+    func loadContent()
+}
+
+final class NewsViewModelImpl: NewsViewModel, LoadingViewModel {
     
     // MARK: - Properties
     
     private let newsService: NewsService
+    private let newsStorage: NewsStorage
+    private let sourceStorage: SourceStorage
+
     private var topHeadlines: TopHeadlinesResponse?
+    private var sources: SourcesResponse?
     
     // MARK: - LoadingViewModel
     
     let downloader = DispatchGroup()
-    var state: LoadingState = .initial
+    var state: LoadingState = .initial {
+        willSet {
+            view?.refresh(isEnabled: newValue == .loading)
+        }
+    }
     var errors: [ApiError] = []
     
     // MARK: - PromoModuleInput
@@ -19,16 +31,20 @@ final class NewsViewModel: LoadingViewModel {
     
     // MARK: - Initialization
     
-    init(newsService: NewsService) {
+    init(newsService: NewsService,
+         newsStorage: NewsStorage,
+         sourceStorage: SourceStorage) {
         self.newsService = newsService
+        self.newsStorage = newsStorage
+        self.sourceStorage = sourceStorage
     }
 }
 
 // MARK: - LoadingViewModel
 
-extension NewsViewModel {
+extension NewsViewModelImpl {
     var dataSource: [VoidBlock] {
-        [loadTopHeadlines]
+        [loadTopHeadlines, loadSource]
     }
     
     func handleResults() {
@@ -39,24 +55,42 @@ extension NewsViewModel {
     private func loadTopHeadlines() {
         newsService.obtainTopHeadlines { [weak self] topHeadlines, error in
             self?.handleErrorIfNeeded(error)
-
-            if let topHeadlines = topHeadlines {
-                self?.topHeadlines = topHeadlines
+            self?.topHeadlines = topHeadlines
+            if let articles = topHeadlines?.articles {
+                self?.newsStorage.save(articles)
             }
-
             self?.downloader.leave()
         }
     }
+    
+    private func loadSource() {
+        newsService.obtainSources(completionHandler: { [weak self] sources, error in
+            self?.handleErrorIfNeeded(error)
+            self?.sources = sources
+            if let sources = sources?.sources {
+                self?.sourceStorage.save(sources)
+            }
+            self?.downloader.leave()
+        })
+    }
 }
 
-extension NewsViewModel: NewsBuilderDataSource {
+// MARK: - NewsBuilderDataSource
+
+extension NewsViewModelImpl: NewsBuilderDataSource {
     var newsSourceViewModels: [NewsCell.ViewModel] {
-        topHeadlines?.articles.map { news in
+        let articles = topHeadlines?.articles ?? newsStorage.read()
+        let sources = self.sources?.sources ?? sourceStorage.read()
+        
+        return articles.map { news in
             NewsCell.ViewModel(
                 iconPath: news.urlToImage,
-                title: news.title,
+                title: news.title ?? "",
                 description: news.description,
-                iconIsReading: false)
-        } ?? []
+                sourceName: news.source?.name ?? "",
+                sourceUrl: sources.first { $0.id == news.source?.id }?.url,
+                iconIsReading: false
+            )
+        } 
     }
 }

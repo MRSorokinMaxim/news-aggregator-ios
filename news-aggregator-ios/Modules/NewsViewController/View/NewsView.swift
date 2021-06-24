@@ -1,3 +1,7 @@
 import UIKit
 
-final class NewsView: TableRootView {}
+final class NewsView: TableRootView {
+    var refreshControl: UIRefreshControl? {
+        tableView.refreshControl
+    }
+}

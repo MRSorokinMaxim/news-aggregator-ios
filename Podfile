@@ -11,6 +11,7 @@ target 'news-aggregator-ios' do
   pod 'Alamofire'
   pod 'TableKit'
   pod 'SnapKit'
+  pod 'RealmSwift'
 
   pod 'SwiftLint'
 

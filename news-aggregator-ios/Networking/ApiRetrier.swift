@@ -25,6 +25,6 @@ final class ApiRetrier: URLRequestRetrier {
             return
         }
         
-        completion(.retryWithDelay(TimeInterval(0.3)))
+        completion(.retryWithDelay(TimeInterval(0.2)))
     }
 }

@@ -5,6 +5,9 @@ final class AppServiceLayer {
     // MARK: Services
 
     let newsService: NewsService
+    let settingService: SettingService
+    let newsStorage: NewsStorage
+    let sourceStorage: SourceStorage
     
     // MARK: Initialization
     
@@ -24,9 +27,12 @@ final class AppServiceLayer {
                                       requestInterceptor: requestInterceptor)
         
         newsService = NewsServiceImpl(apiProvider: apiProvider)
+        settingService = SettingServiceImpl()
+        newsStorage = NewsStorageImpl()
+        sourceStorage = SourceStorageImpl()
     }
 }
 
 extension AppServiceLayer {
-    static let timeout = 30.0
+    static let timeout = 10.0
 }

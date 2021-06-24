@@ -5,7 +5,7 @@ struct Source: Codable {
     let name: String
     let description: String
     let url: String
-    let category: Category
-    let language: Language
-    let country: Country
+    let category: Category?
+    let language: Language?
+    let country: Country?
 }

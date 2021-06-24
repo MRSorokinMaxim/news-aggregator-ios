@@ -19,6 +19,7 @@ class TableRootView: UIView {
             frame: .init(x: 0, y: 0, width: frame.width, height: .leastNormalMagnitude)
         )
         tableView.sectionFooterHeight = .leastNormalMagnitude
+        tableView.refreshControl = UIRefreshControl()
     }
     
     required init?(coder: NSCoder) {
@@ -37,7 +38,7 @@ class TableRootView: UIView {
     func setupInitialLayout() {
         addSubview(tableView)
         tableView.snp.makeConstraints { make in
-            make.edges.equalToSuperview()
+            make.edges.equalTo(safeAreaLayoutGuide)
         }
     }
 }

@@ -11,7 +11,7 @@ final class ApiAdapter: URLRequestAdapter {
     // MARK: - Constants
     
     private enum Constants {
-        static let apiKey = "apiKey"
+        static let apiKey = "X-Api-Key"
     }
     
     private let apiKey = "af0f1f4cb4474900934fc8150a61389b"
@@ -33,25 +33,16 @@ final class ApiAdapter: URLRequestAdapter {
         for session: Session,
         completion: @escaping (Result<URLRequest, Error>) -> Void
     ) {
+        var request: URLRequest = urlRequest
+        
         guard let url = urlRequest.url else {
             fatalError("No url in \(urlRequest)")
         }
-
-        let path = baseURLProvider.newsApiURL.absoluteString + url.absoluteString
-
-        guard var urlComponents = URLComponents(string: path) else {
-            completion(.failure(AFError.parameterEncodingFailed(reason: .missingURL)))
-            return
-        }
-
-        let queryItem = URLQueryItem(name: apiKey, value: Constants.apiKey)
-        urlComponents.queryItems = [queryItem]
         
-        do {
-            let request = URLRequest(url: try urlComponents.asURL())
-            completion(.success(request))
-        } catch {
-            completion(.failure(error))
-        }
+        let path = baseURLProvider.newsApiURL.absoluteString + url.absoluteString
+        request.url = URL(string: path)
+        request.addValue(apiKey, forHTTPHeaderField: Constants.apiKey)
+        
+        completion(.success(request))
     }
 }
