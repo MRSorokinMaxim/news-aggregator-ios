@@ -4,7 +4,7 @@ extension ModuleFactory {
     func createNewsModule(appServiceLayer: AppServiceLayer) -> NewsModule {
         let viewModel = NewsViewModel(newsService: appServiceLayer.newsService)
         let viewController = NewsViewController(viewModel: viewModel)
-        
+        viewModel.view = viewController
         return viewController
     }
 }

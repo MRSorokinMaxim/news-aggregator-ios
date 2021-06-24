@@ -65,7 +65,7 @@ private extension AFDataResponse {
             return .failure(.defaultError)
         }
 
-        if let metrics = metrics, metrics.taskInterval.duration < AppServiceLayer.timeout {
+        if let metrics = metrics, metrics.taskInterval.duration > AppServiceLayer.timeout {
             return .failure(.timeoutError)
         }
 

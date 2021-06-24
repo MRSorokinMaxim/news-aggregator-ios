@@ -20,8 +20,8 @@ final class AppServiceLayer {
         )
         
         let apiProvider = ApiProvider(configuration: configuration,
-                                  trustManager: ServerTrustManager(evaluators: [:]),
-                                  requestInterceptor: requestInterceptor)
+                                      trustManager: ServerTrustManager(evaluators: ["newsapi.org": DefaultTrustEvaluator()]),
+                                      requestInterceptor: requestInterceptor)
         
         newsService = NewsServiceImpl(apiProvider: apiProvider)
     }

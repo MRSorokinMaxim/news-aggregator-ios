@@ -1,9 +1,15 @@
 import UIKit
 import TableKit
 
-final class NewsViewController: UIViewController {
+protocol NewsModuleInput: AnyObject {
+    func configureTableView()
+}
+
+final class NewsViewController: UIViewController, NewsModuleInput {
+    
     private let viewModel: NewsViewModel
     private lazy var tableDirector = TableDirector(tableView: rootView.tableView)
+    private let newsBuilder = NewsBuilder()
     
     private var rootView: NewsView {
         guard let view = self.view as? NewsView else {
@@ -32,5 +38,13 @@ final class NewsViewController: UIViewController {
         
         view.backgroundColor = .white
         title = "common_global_news".localized
+        
+        viewModel.loadContent()
+    }
+    
+    func configureTableView() {
+        tableDirector.clear()
+            .append(sections: newsBuilder.buildSections(from: viewModel))
+            .reload()
     }
 }
