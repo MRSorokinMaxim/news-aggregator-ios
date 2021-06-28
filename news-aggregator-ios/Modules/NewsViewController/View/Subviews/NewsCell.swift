@@ -4,7 +4,13 @@ import AlamofireImage
 typealias NewsTableRow = TableRow<NewsCell>
 
 final class NewsCell: UITableViewCell {
-    private let iconImageView = UIImageView()
+    private let iconImageView: UIImageView = {
+        let imageView = UIImageView()
+        imageView.backgroundColor = .systemGray
+        imageView.contentMode = .scaleAspectFill
+        imageView.layer.masksToBounds = true
+        return imageView
+    }()
     
     private let titleLabel: UILabel = {
         let label = UILabel()
@@ -29,15 +35,26 @@ final class NewsCell: UITableViewCell {
         return textView
     }()
     
+    private let viewedNewsLabel: UILabel = {
+        let label = UILabel()
+        label.font = .systemFont(ofSize: 12, weight: .medium)
+        label.text = "common_viewed".localized
+        label.isHidden = true
+        label.textAlignment = .right
+        return label
+    }()
+    
     private let separatorView: UIView = {
         let view = UIView()
-        view.backgroundColor = .gray
+        view.backgroundColor = UIColor.gray.withAlphaComponent(0.1)
         return view
     }()
 
     private var contentInsets: UIEdgeInsets {
         UIEdgeInsets(top: 16, left: 16, bottom: 0, right: 16)
     }
+    
+    private var onTap: VoidBlock?
 
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -46,6 +63,7 @@ final class NewsCell: UITableViewCell {
         backgroundColor = .clear
 
         setupInitialLayout()
+        bindViews()
     }
 
     required init?(coder: NSCoder) {
@@ -84,7 +102,15 @@ final class NewsCell: UITableViewCell {
         sourceTextView.snp.makeConstraints { make in
             make.top.equalTo(descriptionLabel.snp.bottom).offset(16)
             make.height.equalTo(30)
-            make.leading.trailing.equalToSuperview()
+            make.leading.equalToSuperview()
+        }
+        
+        containerView.addSubview(viewedNewsLabel)
+        viewedNewsLabel.snp.makeConstraints { make in
+            make.centerY.equalTo(sourceTextView)
+            make.height.equalTo(30)
+            make.trailing.equalToSuperview()
+            make.leading.equalTo(sourceTextView.snp.trailing).offset(8)
         }
         
         containerView.addSubview(separatorView)
@@ -95,50 +121,69 @@ final class NewsCell: UITableViewCell {
             make.bottom.equalToSuperview()
         }
     }
+    
+    private func bindViews() {
+        let tap = UITapGestureRecognizer(target: self, action: #selector(tapHandle))
+        addGestureRecognizer(tap)
+    }
+    
+    @objc private func tapHandle() {
+        viewedNewsLabel.isHidden = false
+        onTap?()
+    }
 }
 
 // MARK: - Configurable
 
 extension NewsCell: ConfigurableCell {
-    struct ViewModel {
-        let iconPath: String?
-        let title: String
-        let description: String?
-        let sourceName: String
-        let sourceUrl: String?
-        let iconIsReading: Bool
-        
-        var iconUrl: URL? {
-            guard let iconPath = iconPath else {
-                return nil
-            }
-            
-            return URL(string: iconPath)
-        }
-        
-        var sourceText: NSAttributedString {
-            let attributedString = NSMutableAttributedString(string: "common_source".localized + ": " + sourceName)
-            if let sourceUrl = sourceUrl {
-                attributedString.addAttribute(
-                    .link,
-                    value: sourceUrl,
-                    range: (attributedString.string as NSString).range(of: sourceName)
-                )
-            }
-            
-            return attributedString
-        }
-    }
 
-    func configure(with viewModel: NewsCell.ViewModel) {
+    func configure(with viewModel: NewsCellViewModel) {
         titleLabel.text = viewModel.title
         descriptionLabel.text = viewModel.description
         sourceTextView.attributedText = viewModel.sourceText
-        
-        iconImageView.image = nil
-        if let iconUrl = viewModel.iconUrl {
-            iconImageView.af.setImage(withURL: iconUrl,
-                                      cacheKey: iconUrl.absoluteString)
+        iconImageView.image = viewModel.image
+        onTap = viewModel.onTouchNews
+        viewedNewsLabel.isHidden = !viewModel.isOpen
+
+//        грузить картинки отдельно или сохранять в свой кеш
+        if !(tableView?.isScrollingFast ?? true) && viewModel.image == nil {
+            if let iconUrl = viewModel.iconUrl {
+                iconImageView.af.setImage(
+                    withURL: iconUrl,
+                    cacheKey: iconUrl.absoluteString,
+                    completion:  { [weak self, weak viewModel] result in
+                        if let image = result.value {
+                            self?.resizeImage(image)
+                            viewModel?.image = image
+                        }
+                    })
+            }
+        }
+    }
+    
+    private func resizeImage(_ image: UIImage) {
+        let imageContainerWidth = contentView.frame.width - contentInsets.left - contentInsets.right
+        let newSize = image.size.aspectRatioForWidth(imageContainerWidth)
+        if let resized = image.resized(size: newSize) {
+            iconImageView.image = resized
         }
     }
 }
+
+private extension UIImage {
+    func resized(size: CGSize) -> UIImage? {
+        let renderer = UIGraphicsImageRenderer(size: size)
+        let image = self
+
+        return renderer.image { _ in
+            image.draw(in: CGRect(origin: .zero, size: size))
+        }
+    }
+}
+
+private extension CGSize {
+    func aspectRatioForWidth(_ width: CGFloat) -> CGSize {
+        return CGSize(width: width, height: width * self.height / self.width)
+    }
+}
+

@@ -3,4 +3,7 @@
 "common_unknown_error" = "Unexpected Error";
 "common_timeout_error" = "Timeout Error";
 "common_source" = "Source";
+"common_viewed" = "Viewed";
+
+"common_setting_content_update_frequency" = "Сontent update rate in seconds";
 

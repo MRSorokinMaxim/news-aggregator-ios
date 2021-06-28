@@ -11,10 +11,16 @@ final class NewsViewModelImpl: NewsViewModel, LoadingViewModel {
     private let newsService: NewsService
     private let newsStorage: NewsStorage
     private let sourceStorage: SourceStorage
+    private let viewedNewsStorage: ViewedNewsStorage
+    private let settingService: SettingService
+    
+    private let dateFormatter = DateFormatter.isoFormatter
 
     private var topHeadlines: TopHeadlinesResponse?
     private var sources: SourcesResponse?
     
+    private var updateContentTimer: Timer?
+
     // MARK: - LoadingViewModel
     
     let downloader = DispatchGroup()
@@ -29,14 +35,56 @@ final class NewsViewModelImpl: NewsViewModel, LoadingViewModel {
 
     weak var view: NewsModuleInput?
     
+    // MARK: - NewsBuilderDataSource
+    
+    var newsSourceViewModels: [NewsCellViewModel] {
+        let articles = topHeadlines?.articles ?? newsStorage.read()
+        let sources = self.sources?.sources ?? sourceStorage.read()
+        let viewedNews = viewedNewsStorage.read()
+        
+        return articles.map { article in
+            NewsCellViewModel(
+                iconPath: article.urlToImage,
+                title: article.title,
+                description: article.description,
+                sourceName: article.source?.name,
+                sourceUrl: sources.first { $0.id == article.source?.id }?.url,
+                isOpen: viewedNews.first { $0.title == article.title }?.isOpen ?? false,
+                onTap: { [weak self] in
+                    guard let path = article.url, let url = URL(string: path) else { return }
+                    self?.updateViewedArticle(article: article)
+                    self?.view?.onTapNews?(url)
+                }
+            )
+        }
+    }
+    
     // MARK: - Initialization
     
     init(newsService: NewsService,
          newsStorage: NewsStorage,
-         sourceStorage: SourceStorage) {
+         sourceStorage: SourceStorage,
+         viewedNewsStorage: ViewedNewsStorage,
+         settingService: SettingService) {
         self.newsService = newsService
         self.newsStorage = newsStorage
         self.sourceStorage = sourceStorage
+        self.viewedNewsStorage = viewedNewsStorage
+        self.settingService = settingService
+        
+        settingService.addDelegate(self)
+        
+        if let timeInterval = Double(settingService.newsUpdatFrequency) {
+            let timer = Timer(timeInterval: timeInterval,
+                                            target: self,
+                                            selector: #selector(updateTimer),
+                                            userInfo: nil,
+                                            repeats: true)
+            RunLoop.current.add(timer, forMode: .common)
+            timer.tolerance = 0.1
+            
+            self.updateContentTimer = timer
+        }
     }
 }
 
@@ -58,6 +106,8 @@ extension NewsViewModelImpl {
             self?.topHeadlines = topHeadlines
             if let articles = topHeadlines?.articles {
                 self?.newsStorage.save(articles)
+                self?.updateViewedArticles(articles: articles)
+                print("Download Articl")
             }
             self?.downloader.leave()
         }
@@ -69,28 +119,63 @@ extension NewsViewModelImpl {
             self?.sources = sources
             if let sources = sources?.sources {
                 self?.sourceStorage.save(sources)
+                print("Download sources")
             }
             self?.downloader.leave()
         })
     }
 }
 
-// MARK: - NewsBuilderDataSource
-
-extension NewsViewModelImpl: NewsBuilderDataSource {
-    var newsSourceViewModels: [NewsCell.ViewModel] {
-        let articles = topHeadlines?.articles ?? newsStorage.read()
-        let sources = self.sources?.sources ?? sourceStorage.read()
+private extension NewsViewModelImpl {
+    func updateViewedArticles(articles: [Article]) {
+        let savedViewedArticles = viewedNewsStorage.read()
         
-        return articles.map { news in
-            NewsCell.ViewModel(
-                iconPath: news.urlToImage,
-                title: news.title ?? "",
-                description: news.description,
-                sourceName: news.source?.name ?? "",
-                sourceUrl: sources.first { $0.id == news.source?.id }?.url,
-                iconIsReading: false
-            )
-        } 
+        let viewedArticles = articles.compactMap { article -> ViewedArticle? in
+            let savedViewedArticle = savedViewedArticles.first { $0.title == article.title }
+            if savedViewedArticle != nil {
+                return savedViewedArticle
+            }
+            
+            guard let title = article.title else { return nil }
+            
+            return ViewedArticle(title: title, isOpen: false)
+        }
+        
+        viewedNewsStorage.save(viewedArticles)
+    }
+    
+    func updateViewedArticle(article: Article) {
+        let viewedArticles = viewedNewsStorage.read().filter { $0.title != article.title }
+        
+        guard let title = article.title else { return }
+        
+        viewedNewsStorage.save(viewedArticles + [ViewedArticle(title: title, isOpen: true)])
+    }
+}
+
+// MARK: - SettingServiceDelegate
+
+extension NewsViewModelImpl: SettingServiceDelegate {
+    func updateNewsUpdatFrequency(_ value: String) {
+        createUpdateContentTimer(value)
+    }
+    
+    private func createUpdateContentTimer(_ value: String) {
+        if let timeInterval = Double(value) {
+            let timer = Timer(timeInterval: timeInterval,
+                                            target: self,
+                                            selector: #selector(updateTimer),
+                                            userInfo: nil,
+                                            repeats: true)
+            RunLoop.current.add(timer, forMode: .common)
+            timer.tolerance = 0.1
+            
+            self.updateContentTimer?.invalidate()
+            self.updateContentTimer = timer
+        }
+    }
+    
+    @objc private func updateTimer() {
+        loadContent()
     }
 }

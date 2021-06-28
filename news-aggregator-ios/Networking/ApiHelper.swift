@@ -9,6 +9,8 @@ enum ApiHelper {
                     return URLQueryItem(name: key, value: value)
                 } else if let value = value as? String {
                     return URLQueryItem(name: key, value: value)
+                } else if let value = value as? Int {
+                    return URLQueryItem(name: key, value: String(value))
                 } else {
                     return nil
                 }

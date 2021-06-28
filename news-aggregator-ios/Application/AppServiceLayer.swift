@@ -8,6 +8,7 @@ final class AppServiceLayer {
     let settingService: SettingService
     let newsStorage: NewsStorage
     let sourceStorage: SourceStorage
+    let viewedNewsStorage: ViewedNewsStorage
     
     // MARK: Initialization
     
@@ -30,6 +31,7 @@ final class AppServiceLayer {
         settingService = SettingServiceImpl()
         newsStorage = NewsStorageImpl()
         sourceStorage = SourceStorageImpl()
+        viewedNewsStorage = ViewedNewsStorageImpl()
     }
 }
 

@@ -19,7 +19,6 @@ class TableRootView: UIView {
             frame: .init(x: 0, y: 0, width: frame.width, height: .leastNormalMagnitude)
         )
         tableView.sectionFooterHeight = .leastNormalMagnitude
-        tableView.refreshControl = UIRefreshControl()
     }
     
     required init?(coder: NSCoder) {

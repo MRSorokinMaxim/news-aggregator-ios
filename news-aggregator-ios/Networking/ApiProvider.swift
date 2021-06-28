@@ -22,11 +22,6 @@ final class ApiProvider {
     }
 
     /// Отправить API запрос по эндпроиту.
-    ///
-    /// - Parameters:
-    ///   - endpoint: Конечная точка запроса.
-    ///   - type: Тип объекта в ответе.
-    ///   - completion: Декодированный результат запроса либо ошибка.
     func request<T>(
         endpoint: Endpoint,
         type: T.Type,

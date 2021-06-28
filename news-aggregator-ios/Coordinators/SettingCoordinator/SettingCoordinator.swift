@@ -22,7 +22,7 @@ final class SettingCoordinator: BaseCoordinator {
     }
 
     private func showNewsModule() {
-        let module = moduleFactory.createSettingModule()
+        let module = moduleFactory.createSettingModule(appServiceLayer: appServiceLayer)
         router.push(module)
     }
 }

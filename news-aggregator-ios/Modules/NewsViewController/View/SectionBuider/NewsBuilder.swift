@@ -1,7 +1,7 @@
 import TableKit
 
 protocol NewsBuilderDataSource {
-    var newsSourceViewModels: [NewsCell.ViewModel]  { get }
+    var newsSourceViewModels: [NewsCellViewModel]  { get }
 }
 
 final class NewsBuilder {
@@ -15,7 +15,7 @@ final class NewsBuilder {
 
     // MARK: - Public methods
 
-    private func makeNewsSection(from dataSource: NewsBuilderDataSource) -> TableSection {
+    func makeNewsSection(from dataSource: NewsBuilderDataSource) -> TableSection {
         let rows = dataSource.newsSourceViewModels.map {
             NewsTableRow(item: $0)
         }
