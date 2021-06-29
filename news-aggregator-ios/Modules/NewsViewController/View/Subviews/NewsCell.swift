@@ -1,5 +1,4 @@
 import TableKit
-import AlamofireImage
 
 typealias NewsTableRow = TableRow<NewsCell>
 
@@ -141,49 +140,12 @@ extension NewsCell: ConfigurableCell {
         titleLabel.text = viewModel.title
         descriptionLabel.text = viewModel.description
         sourceTextView.attributedText = viewModel.sourceText
-        iconImageView.image = viewModel.image
         onTap = viewModel.onTouchNews
         viewedNewsLabel.isHidden = !viewModel.isOpen
-
-//        грузить картинки отдельно или сохранять в свой кеш
-        if !(tableView?.isScrollingFast ?? true) && viewModel.image == nil {
-            if let iconUrl = viewModel.iconUrl {
-                iconImageView.af.setImage(
-                    withURL: iconUrl,
-                    cacheKey: iconUrl.absoluteString,
-                    completion:  { [weak self, weak viewModel] result in
-                        if let image = result.value {
-                            self?.resizeImage(image)
-                            viewModel?.image = image
-                        }
-                    })
-            }
-        }
-    }
-    
-    private func resizeImage(_ image: UIImage) {
-        let imageContainerWidth = contentView.frame.width - contentInsets.left - contentInsets.right
-        let newSize = image.size.aspectRatioForWidth(imageContainerWidth)
-        if let resized = image.resized(size: newSize) {
-            iconImageView.image = resized
+        
+        if let iconPath = viewModel.iconPath {
+            iconImageView.load(path: iconPath,
+                               width: contentView.frame.width - contentInsets.left - contentInsets.right)
         }
     }
 }
-
-private extension UIImage {
-    func resized(size: CGSize) -> UIImage? {
-        let renderer = UIGraphicsImageRenderer(size: size)
-        let image = self
-
-        return renderer.image { _ in
-            image.draw(in: CGRect(origin: .zero, size: size))
-        }
-    }
-}
-
-private extension CGSize {
-    func aspectRatioForWidth(_ width: CGFloat) -> CGSize {
-        return CGSize(width: width, height: width * self.height / self.width)
-    }
-}
-

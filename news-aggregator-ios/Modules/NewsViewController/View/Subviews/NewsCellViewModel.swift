@@ -9,8 +9,6 @@ final class NewsCellViewModel {
     let sourceUrl: String?
     private(set) var isOpen: Bool
     let onTap: VoidBlock
-
-    var image: UIImage?
     
     var iconUrl: URL? {
         guard let iconPath = iconPath else {

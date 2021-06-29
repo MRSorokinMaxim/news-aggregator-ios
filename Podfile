@@ -7,7 +7,6 @@ target 'news-aggregator-ios' do
 
   # Pods for news-aggregator-ios
 
-  pod 'AlamofireImage'
   pod 'Alamofire'
   pod 'TableKit'
   pod 'SnapKit'

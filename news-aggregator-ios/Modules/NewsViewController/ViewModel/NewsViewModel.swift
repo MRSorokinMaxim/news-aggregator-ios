@@ -13,8 +13,6 @@ final class NewsViewModelImpl: NewsViewModel, LoadingViewModel {
     private let sourceStorage: SourceStorage
     private let viewedNewsStorage: ViewedNewsStorage
     private let settingService: SettingService
-    
-    private let dateFormatter = DateFormatter.isoFormatter
 
     private var topHeadlines: TopHeadlinesResponse?
     private var sources: SourcesResponse?
@@ -24,11 +22,7 @@ final class NewsViewModelImpl: NewsViewModel, LoadingViewModel {
     // MARK: - LoadingViewModel
     
     let downloader = DispatchGroup()
-    var state: LoadingState = .initial {
-        willSet {
-            view?.refresh(isEnabled: newValue == .loading)
-        }
-    }
+    var state: LoadingState = .initial
     var errors: [ApiError] = []
     
     // MARK: - PromoModuleInput
@@ -74,17 +68,7 @@ final class NewsViewModelImpl: NewsViewModel, LoadingViewModel {
         
         settingService.addDelegate(self)
         
-        if let timeInterval = Double(settingService.newsUpdatFrequency) {
-            let timer = Timer(timeInterval: timeInterval,
-                                            target: self,
-                                            selector: #selector(updateTimer),
-                                            userInfo: nil,
-                                            repeats: true)
-            RunLoop.current.add(timer, forMode: .common)
-            timer.tolerance = 0.1
-            
-            self.updateContentTimer = timer
-        }
+        createUpdateContentTimer(settingService.newsUpdatFrequency)
     }
 }
 
@@ -107,7 +91,6 @@ extension NewsViewModelImpl {
             if let articles = topHeadlines?.articles {
                 self?.newsStorage.save(articles)
                 self?.updateViewedArticles(articles: articles)
-                print("Download Articl")
             }
             self?.downloader.leave()
         }
@@ -119,7 +102,6 @@ extension NewsViewModelImpl {
             self?.sources = sources
             if let sources = sources?.sources {
                 self?.sourceStorage.save(sources)
-                print("Download sources")
             }
             self?.downloader.leave()
         })

@@ -3,7 +3,6 @@ import TableKit
 
 protocol NewsModuleInput: NewsModule {
     func configureTableView()
-    func refresh(isEnabled: Bool)
 }
 
 final class NewsViewController: UIViewController, NewsModuleInput, UIScrollViewDelegate {
@@ -13,6 +12,10 @@ final class NewsViewController: UIViewController, NewsModuleInput, UIScrollViewD
     private let viewModel: NewsViewModel
     private lazy var tableDirector = TableDirector(tableView: rootView.tableView, scrollDelegate: self)
     private let newsBuilder = NewsBuilder()
+    
+    private var lastOffset: CGPoint = .zero
+    private var lastOffsetCapture: TimeInterval = .zero
+    private var isScrollingFast = false
     
     private var rootView: NewsView {
         guard let view = self.view as? NewsView else {
@@ -43,14 +46,7 @@ final class NewsViewController: UIViewController, NewsModuleInput, UIScrollViewD
         title = "common_global_news".localized
         
         configureTableView()
-        bindView()
         refreshData()
-    }
-    
-    override func viewWillDisappear(_ animated: Bool) {
-        super.viewWillDisappear(animated)
-        
-        rootView.refreshControl?.endRefreshing()
     }
     
     func configureTableView() {
@@ -60,18 +56,6 @@ final class NewsViewController: UIViewController, NewsModuleInput, UIScrollViewD
                 .reload()
         }
     }
-    
-    func refresh(isEnabled: Bool) {
-        if isEnabled {
-            rootView.refreshControl?.beginRefreshing()
-        } else {
-            rootView.refreshControl?.endRefreshing()
-        }
-    }
-    
-    var lastOffset: CGPoint = .zero
-    var lastOffsetCapture: TimeInterval = .zero
-    var isScrollingFast: Bool = false
     
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
 
@@ -87,28 +71,19 @@ final class NewsViewController: UIViewController, NewsModuleInput, UIScrollViewD
             let scrollSpeed = fabsf(Float(scrollSpeedNotAbs))  // absolute value
             
             if scrollSpeed > 0.5 {
-                tableDirector.tableView?.isScrollingFast = true
                 isScrollingFast = true
                 print("Fast")
             } else {
-                tableDirector.tableView?.isScrollingFast = false
                 isScrollingFast = false
                 print("Slow")
             }
             
             lastOffset = currentOffset
             lastOffsetCapture = currentTime
-            
         }
     }
     
-    @objc private func refreshData() {
+    private func refreshData() {
         viewModel.loadContent()
-    }
-    
-    private func bindView() {
-        rootView.refreshControl?.addTarget(self,
-                                           action: #selector(refreshData),
-                                           for: .valueChanged)
     }
 }
