@@ -1,58 +1,48 @@
 import Foundation
 import UIKit
 
-protocol ImagePass {
-    var image: UIImage? { get }
-}
-
-final class ImageLoadOperation: AsyncOperation {
+final class ImageLoadOperation: AsyncOperation<UIImage?, Error> {
     private let path: String?
-
-    var result: Result<UIImage?, Error>?
     
     init(path: String?) {
         self.path = path
+
         super.init()
+        self.state = .isReady
     }
     
-    override func main() {
+    override func start() {
+        super.start()
+
         if let imagePath = path {
             asyncImageLoad(path: imagePath) { [weak self] result in
                 self?.result = result
-                self?.state = .finished
+                self?.state = .isFinished
             }
+        } else {
+            result = .failure(ImageDownloadError.imagePathError)
+            state = .isFinished
         }
     }
     
     private func asyncImageLoad(path: String,
-                                complection: @escaping (Result<UIImage?, Error>) -> Void) {
+                                completion: @escaping (Result<UIImage?, Error>) -> Void) {
         guard let url = URL(string: path) else {
-            complection(.failure(ImageDownloadError.imageDownloadError))
+            completion(.failure(ImageDownloadError.imageDownloadError))
             return
         }
 
         let task = URLSession.shared.dataTask(with: url) { (data, responce, error) in
             if let data = data {
-                complection(.success(UIImage(data: data)))
+                completion(.success(UIImage(data: data)))
                 return
             }
-            
+
             if let error = error {
-                complection(.failure(error))
+                completion(.failure(error))
             }
         }
         
         task.resume()
-    }
-}
-
-extension ImageLoadOperation: ImagePass {
-    var image: UIImage? {
-        switch result {
-        case let .success(image?):
-            return image
-        default:
-            return nil
-        }
     }
 }

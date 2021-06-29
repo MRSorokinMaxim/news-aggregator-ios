@@ -144,8 +144,8 @@ extension NewsCell: ConfigurableCell {
         viewedNewsLabel.isHidden = !viewModel.isOpen
         
         if let iconPath = viewModel.iconPath {
-            iconImageView.load(path: iconPath,
-                               width: contentView.frame.width - contentInsets.left - contentInsets.right)
+            let imageWidth = contentView.frame.width - contentInsets.left - contentInsets.right
+            iconImageView.load(path: iconPath, width: imageWidth)
         }
     }
 }

@@ -2,7 +2,7 @@ import UIKit
 import TableKit
 
 protocol NewsModuleInput: NewsModule {
-    func configureTableView()
+    func configureTableViewIfPossible()
 }
 
 final class NewsViewController: UIViewController, NewsModuleInput, UIScrollViewDelegate {
@@ -16,6 +16,7 @@ final class NewsViewController: UIViewController, NewsModuleInput, UIScrollViewD
     private var lastOffset: CGPoint = .zero
     private var lastOffsetCapture: TimeInterval = .zero
     private var isScrollingFast = false
+    private var isImmediatelyUpdatTableView = false
     
     private var rootView: NewsView {
         guard let view = self.view as? NewsView else {
@@ -45,20 +46,18 @@ final class NewsViewController: UIViewController, NewsModuleInput, UIScrollViewD
         view.backgroundColor = .white
         title = "common_global_news".localized
         
-        configureTableView()
         refreshData()
     }
     
-    func configureTableView() {
+    func configureTableViewIfPossible() {
         if !isScrollingFast {
-            tableDirector.clear()
-                .append(sections: newsBuilder.buildSections(from: viewModel))
-                .reload()
+            configureTableView()
+        } else {
+            isImmediatelyUpdatTableView = true
         }
     }
     
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
-
         let currentOffset = scrollView.contentOffset
         let currentTime = Date.timeIntervalSinceReferenceDate
         let timeDiff = currentTime - lastOffsetCapture
@@ -72,10 +71,12 @@ final class NewsViewController: UIViewController, NewsModuleInput, UIScrollViewD
             
             if scrollSpeed > 0.5 {
                 isScrollingFast = true
-                print("Fast")
             } else {
                 isScrollingFast = false
-                print("Slow")
+                
+                if isImmediatelyUpdatTableView {
+                    configureTableView()
+                }
             }
             
             lastOffset = currentOffset
@@ -85,5 +86,11 @@ final class NewsViewController: UIViewController, NewsModuleInput, UIScrollViewD
     
     private func refreshData() {
         viewModel.loadContent()
+    }
+    
+    private func configureTableView() {
+        tableDirector.clear()
+            .append(sections: newsBuilder.buildSections(from: viewModel))
+            .reload()
     }
 }

@@ -81,7 +81,7 @@ extension NewsViewModelImpl {
     
     func handleResults() {
         state = .rich
-        view?.configureTableView()
+        view?.configureTableViewIfPossible()
     }
     
     private func loadTopHeadlines() {

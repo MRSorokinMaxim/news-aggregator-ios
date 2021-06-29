@@ -23,7 +23,9 @@ final class NewsCellViewModel {
             return .init()
         }
 
-        let attributedString = NSMutableAttributedString(string: "common_source".localized + ": " + sourceName)
+        let attributedString = NSMutableAttributedString(
+            string: "common_source".localized + ": " + sourceName
+        )
         if let sourceUrl = sourceUrl {
             attributedString.addAttribute(
                 .link,

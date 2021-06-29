@@ -1,56 +1,99 @@
 import Foundation
 
-class AsyncOperation: Operation {
-    enum State: String {
-        case ready
-        case executing
-        case finished
-        
-        fileprivate var keyPath: String {
-            return "is" + rawValue.capitalized
-        }
-    }
-    
-    var state = State.ready {
+open class AsyncOperation<Output, Failure: Error>: Operation {
+
+    open var result: Result<Output, Failure>?
+
+    var state: State? = nil {
+        // KVO support
         willSet {
-            willChangeValue(forKey: newValue.keyPath)
-            willChangeValue(forKey: state.keyPath)
+            willChangeValue(forKey: newValue.orReady.rawValue)
+            willChangeValue(forKey: state.orReady.rawValue)
         }
-        
+
         didSet {
-            willChangeValue(forKey: oldValue.keyPath)
-            willChangeValue(forKey: state.keyPath)
+            didChangeValue(forKey: state.orReady.rawValue)
+            didChangeValue(forKey: oldValue.orReady.rawValue)
         }
     }
 
-    override var isAsynchronous: Bool {
-        return true
+    // MARK: - Operation override
+
+    open override var isCancelled: Bool {
+        state == .isCancelled
     }
-    
-    override var isReady: Bool {
-        super.isReady && state == .ready
+
+    open override var isExecuting: Bool {
+        state == .isExecuting
     }
-    
-    override var isExecuting: Bool {
-        state == .executing
+
+    open override var isFinished: Bool {
+        state == .isFinished
     }
-    
-    override var isFinished: Bool {
-        state == .finished
+
+    open override var isReady: Bool {
+        state == .isReady
     }
-    
-    override func start() {
-        if isCancelled {
-            state = .finished
-            return
+
+    open override var isAsynchronous: Bool {
+        true
+    }
+
+    open override func start() {
+        state = .isExecuting
+
+        if result != nil {
+            state = .isFinished
         }
-        
-        main()
-        state = .executing
     }
-    
-    override func cancel() {
-        super.cancel()
-        state = .finished
+
+    open override func cancel() {
+        state = .isCancelled
+    }
+
+    // MARK: - Methods for subclass override
+
+    open func handle(result: Output) {
+        self.result = .success(result)
+    }
+
+    open func handle(error: Failure) {
+        self.result = .failure(error)
+    }
+
+    // MARK: - Helpers
+
+    func observe(onSuccess: ((Output) -> Void)? = nil,
+                 onFailure: ((Failure) -> Void)? = nil) -> NSKeyValueObservation {
+
+        observe(\.isFinished, options: [.new]) { object, change in
+            if let isFinished = change.newValue, isFinished {
+                switch object.result {
+                case let .success(result)?:
+                    onSuccess?(result)
+
+                case let .failure(failure)?:
+                    onFailure?(failure)
+
+                default:
+                    assertionFailure("Got nil result from operation when isFinished was true!")
+                }
+            }
+        }
+    }
+}
+
+private extension Optional where Wrapped == Operation.State {
+    var orReady: Wrapped {
+        self ?? .isReady
+    }
+}
+
+extension Operation {
+    enum State: String {
+        case isCancelled
+        case isExecuting
+        case isFinished
+        case isReady
     }
 }

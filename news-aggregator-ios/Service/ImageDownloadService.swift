@@ -3,19 +3,29 @@ import UIKit
 
 enum ImageDownloadError: Error {
     case imageDownloadError
+    case imagePathError
+    case imageResizedError
+    case unknowed
 }
 
 final class ImageDownloadService {
     static let shared = ImageDownloadService()
     
     private var imageCache = NSCache<AnyObject, UIImage>()
-    private let imageLoadQueue = OperationQueue()
+    private let imageLoadQueue: OperationQueue = {
+        let operationQueue = OperationQueue()
+        operationQueue.maxConcurrentOperationCount = 5
+        operationQueue.qualityOfService = .utility
+        return operationQueue
+    }()
+    
+    private var imageObservation: NSKeyValueObservation?
     
     func asyncImageLoad(path: String?,
                         width: CGFloat,
                         complection: @escaping (Result<UIImage?, Error>) -> Void) {
         guard let path = path else {
-            complection(.failure(ImageDownloadError.imageDownloadError))
+            complection(.failure(ImageDownloadError.imagePathError))
             return
         }
         
@@ -25,35 +35,26 @@ final class ImageDownloadService {
         }
 
         let imageLoadOperation = ImageLoadOperation(path: path)
-        imageLoadOperation.completionBlock = { [weak imageLoadOperation] in
-            OperationQueue.main.addOperation {
-                switch imageLoadOperation?.result {
-                case let .failure(error):
-                    complection(.failure(error))
-
-                default:
-                    break
-                }
-            }
-        }
-        
         let resizeImageOperation = ResizeImageOperation(image: nil, width: width)
-        resizeImageOperation.completionBlock = { [weak self, weak resizeImageOperation] in
-            OperationQueue.main.addOperation {
-                guard let image = resizeImageOperation?.outputImage else {
-                    complection(.failure(ImageDownloadError.imageDownloadError))
-                    return
-                }
-                
-                self?.imageCache.setObject(image, forKey: path as AnyObject)
-                
-                complection(.success(image))
-            }
-        }
-
         resizeImageOperation.addDependency(imageLoadOperation)
+        
+        imageObservation = resizeImageOperation
+            .observe(onSuccess: { [weak self] image in
+                OperationQueue.main.addOperation {
+                    if let image = image {
+                        self?.imageCache.setObject(image, forKey: path as AnyObject)
+                        complection(.success(image))
+                    }
+                    
+                    complection(.failure(ImageDownloadError.unknowed))
+                }
+            }, onFailure: { error in
+                OperationQueue.main.addOperation {
+                    complection(.failure(error))
+                }
+            })
 
-        imageLoadQueue.addOperations([imageLoadOperation, resizeImageOperation], waitUntilFinished: true)
+        imageLoadQueue.addOperations([imageLoadOperation, resizeImageOperation], waitUntilFinished: false)
     }
 }
 

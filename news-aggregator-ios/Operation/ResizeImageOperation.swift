@@ -1,35 +1,43 @@
 import Foundation
 import UIKit
 
-final class ResizeImageOperation: AsyncOperation {
+final class ResizeImageOperation: AsyncOperation<UIImage?, Error> {
     private let inputImage: UIImage?
     private let width: CGFloat
     
-    var outputImage: UIImage?
+    private var dependencyObservation: NSKeyValueObservation?
     
     init(image: UIImage?, width: CGFloat) {
         self.inputImage = image
         self.width = width
         super.init()
+
+        state = .isReady
     }
     
-    private var image: UIImage? {
-        if let inputImage = inputImage {
-            return inputImage
-        } else if let dataProvider = dependencies.filter({ $0 is ImagePass }) .first as? ImagePass {
-            return dataProvider.image
-        } else {
-            return nil
+    override func start() {
+        super.start()
+        
+        if let dataProvider = dependencies.filter({ $0 is ImageLoadOperation }) .first as? ImageLoadOperation {
+            dependencyObservation = dataProvider
+                .observe(onSuccess: { [weak self] image in
+                    self?.resized(image: image)
+                }, onFailure: { [weak self] error in
+                    self?.result = .failure(error)
+                    self?.state = .isFinished
+                })
         }
     }
     
-    override func main() {
+    private func resized(image: UIImage?) {
         if let newSize = image?.size.aspectRatioForWidth(width),
            let resizedImage = image?.resized(size: newSize) {
-               outputImage = resizedImage
+            result = .success(resizedImage)
+        } else {
+            result = .failure(ImageDownloadError.imageResizedError)
         }
         
-        state = .finished
+        state = .isFinished
     }
 }
 
