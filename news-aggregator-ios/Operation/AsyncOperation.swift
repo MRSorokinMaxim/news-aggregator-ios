@@ -5,7 +5,6 @@ open class AsyncOperation<Output, Failure: Error>: Operation {
     open var result: Result<Output, Failure>?
 
     var state: State? = nil {
-        // KVO support
         willSet {
             willChangeValue(forKey: newValue.orReady.rawValue)
             willChangeValue(forKey: state.orReady.rawValue)

@@ -6,12 +6,18 @@ protocol NewsModuleInput: NewsModule {
 }
 
 final class NewsViewController: UIViewController, NewsModuleInput, UIScrollViewDelegate {
+    private enum LeftBarButtonType {
+        case collapse
+        case expand
+    }
     
     var onTapNews: ParameterClosure<URL>?
     
     private let viewModel: NewsViewModel
     private lazy var tableDirector = TableDirector(tableView: rootView.tableView, scrollDelegate: self)
-    private let newsBuilder = NewsBuilder()
+    private let newsBuilder: NewsBuilder = NewsBuilderImpl()
+    
+    private var leftBarButtonType: LeftBarButtonType = .expand
     
     private var lastOffset: CGPoint = .zero
     private var lastOffsetCapture: TimeInterval = .zero
@@ -45,6 +51,12 @@ final class NewsViewController: UIViewController, NewsModuleInput, UIScrollViewD
         
         view.backgroundColor = .white
         title = "common_global_news".localized
+        
+        navigationItem.leftBarButtonItem = UIBarButtonItem(image: UIImage(named: "collapse_icon"),
+                                                           style: .plain,
+                                                           target: self,
+                                                           action: #selector(barButtonHandle)
+        )
         
         refreshData()
     }
@@ -89,8 +101,32 @@ final class NewsViewController: UIViewController, NewsModuleInput, UIScrollViewD
     }
     
     private func configureTableView() {
+        let section: TableSection
+        switch leftBarButtonType {
+        case .collapse:
+            section = newsBuilder.makeCollapceNewsSection(from: viewModel)
+        case .expand:
+            section = newsBuilder.makeNewsSection(from: viewModel)
+        }
+        
         tableDirector.clear()
-            .append(sections: newsBuilder.buildSections(from: viewModel))
+            .append(section: section)
             .reload()
+    }
+    
+    @objc private func barButtonHandle() {
+        toogleBarButton()
+        configureTableView()
+    }
+    
+    private func toogleBarButton() {
+        switch leftBarButtonType {
+        case .collapse:
+            navigationItem.leftBarButtonItem?.image = UIImage(named: "collapse_icon")
+            leftBarButtonType = .expand
+        case .expand:
+            navigationItem.leftBarButtonItem?.image = UIImage(named: "expand_icon")
+            leftBarButtonType = .collapse
+        }
     }
 }

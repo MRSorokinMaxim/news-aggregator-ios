@@ -32,7 +32,7 @@ final class NewsServiceImpl: NewsService {
         let endpoint = NewsEndpoint.topHeadlines(data: data)
 
         apiProvider.request(endpoint: endpoint, type: TopHeadlinesResponse.self) { result, error in
-            completionHandler(result?.first, error)
+            completionHandler(result?.first , error)
         }
     }
     

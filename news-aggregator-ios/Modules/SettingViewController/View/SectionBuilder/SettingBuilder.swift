@@ -4,7 +4,11 @@ protocol SettingBuilderDataSource {
     var settingViewModels: SettingCellViewModel { get }
 }
 
-final class SettingBuilder {
+protocol SettingBuilder {
+    func buildSections(from dataSource: SettingBuilderDataSource) -> [TableSection]
+}
+
+final class SettingBuilderImpl: SettingBuilder {
     // MARK: - Interface
 
     func buildSections(from dataSource: SettingBuilderDataSource) -> [TableSection] {
@@ -15,7 +19,7 @@ final class SettingBuilder {
 
     // MARK: - Public methods
 
-    func makeNewsSection(from dataSource: SettingBuilderDataSource) -> TableSection {
+    private func makeNewsSection(from dataSource: SettingBuilderDataSource) -> TableSection {
         let row = SettingTableRow(item: dataSource.settingViewModels)
         return .init(rows: [row])
     }

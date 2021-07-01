@@ -45,9 +45,21 @@ final class NewsViewModelImpl: NewsViewModel, LoadingViewModel {
                 sourceUrl: sources.first { $0.id == article.source?.id }?.url,
                 isOpen: viewedNews.first { $0.title == article.title }?.isOpen ?? false,
                 onTap: { [weak self] in
-                    guard let path = article.url, let url = URL(string: path) else { return }
-                    self?.updateViewedArticle(article: article)
-                    self?.view?.onTapNews?(url)
+                    self?.handleTapOnNews(with: article)
+                }
+            )
+        }
+    }
+    
+    var collapceNewsViewModels: [CollapseNewsViewModel] {
+        let articles = topHeadlines?.articles ?? newsStorage.read()
+
+        return articles.map { article in
+            CollapseNewsViewModel(
+                title: article.title,
+                iconPath: article.urlToImage,
+                onTap: { [weak self] in
+                    self?.handleTapOnNews(with: article)
                 }
             )
         }
@@ -69,6 +81,12 @@ final class NewsViewModelImpl: NewsViewModel, LoadingViewModel {
         settingService.addDelegate(self)
         
         createUpdateContentTimer(settingService.newsUpdatFrequency)
+    }
+    
+    private func handleTapOnNews(with article: Article) {
+        guard let path = article.url, let url = URL(string: path) else { return }
+        updateViewedArticle(article: article)
+        view?.onTapNews?(url)
     }
 }
 
@@ -145,10 +163,10 @@ extension NewsViewModelImpl: SettingServiceDelegate {
     private func createUpdateContentTimer(_ value: String) {
         if let timeInterval = Double(value) {
             let timer = Timer(timeInterval: timeInterval,
-                                            target: self,
-                                            selector: #selector(updateTimer),
-                                            userInfo: nil,
-                                            repeats: true)
+                              target: self,
+                              selector: #selector(updateTimer),
+                              userInfo: nil,
+                              repeats: true)
             RunLoop.current.add(timer, forMode: .common)
             timer.tolerance = 0.1
             

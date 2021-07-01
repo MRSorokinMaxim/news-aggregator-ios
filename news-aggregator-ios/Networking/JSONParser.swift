@@ -8,7 +8,7 @@ final class JSONParser {
     
     // MARK: - Public Properties
     
-    var dateDecodingStrategy: JSONDecoder.DateDecodingStrategy = .custom { decoder in
+    private var dateDecodingStrategy: JSONDecoder.DateDecodingStrategy = .custom { decoder in
         let container = try decoder.singleValueContainer()
         let dateString = try container.decode(String.self)
         let dateFormatter = DateFormatter.dateFormatter(for: dateString)
@@ -28,16 +28,10 @@ final class JSONParser {
     func parse<T>(_ data: Data, type: T.Type) throws -> [T]? where T: Decodable {
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = dateDecodingStrategy
-        
-        let jsonObject = try JSONSerialization.jsonObject(with: data, options: [])
-        
+
         do {
-            if jsonObject is [String: Any] {
-                let value = try decoder.decode(T.self, from: data)
-                return [value]
-            } else {
-                return try decoder.decode(SafelyDecodedArray<T>.self, from: data).elements
-            }
+            let value = try decoder.decode(T.self, from: data)
+            return [value]
         } catch {
             debugPrint("Fail decode object \(T.self): \(error)")
             throw JSONParserError.failDecodeObject

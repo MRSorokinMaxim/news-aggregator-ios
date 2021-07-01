@@ -1,11 +1,19 @@
 import Foundation
 import UIKit
 
-final class ImageLoadOperation: AsyncOperation<UIImage?, Error> {
+struct Image {
+    let image: UIImage?
+    let tag: Int
+}
+
+final class ImageLoadOperation: AsyncOperation<Image?, Error> {
     private let path: String?
+    private let tag: Int
     
-    init(path: String?) {
+    init(path: String?,
+         tag: Int) {
         self.path = path
+        self.tag = tag
 
         super.init()
         self.state = .isReady
@@ -14,19 +22,21 @@ final class ImageLoadOperation: AsyncOperation<UIImage?, Error> {
     override func start() {
         super.start()
 
-        if let imagePath = path {
-            asyncImageLoad(path: imagePath) { [weak self] result in
-                self?.result = result
-                self?.state = .isFinished
-            }
-        } else {
+        guard let imagePath = path else {
             result = .failure(ImageDownloadError.imagePathError)
             state = .isFinished
+            return
+        }
+
+        asyncImageLoad(path: imagePath, tag: tag) { [weak self] result in
+            self?.result = result
+            self?.state = .isFinished
         }
     }
     
     private func asyncImageLoad(path: String,
-                                completion: @escaping (Result<UIImage?, Error>) -> Void) {
+                                tag: Int,
+                                completion: @escaping (Result<Image?, Error>) -> Void) {
         guard let url = URL(string: path) else {
             completion(.failure(ImageDownloadError.imageDownloadError))
             return
@@ -34,7 +44,7 @@ final class ImageLoadOperation: AsyncOperation<UIImage?, Error> {
 
         let task = URLSession.shared.dataTask(with: url) { (data, responce, error) in
             if let data = data {
-                completion(.success(UIImage(data: data)))
+                completion(.success(.init(image: UIImage(data: data), tag: tag)))
                 return
             }
 

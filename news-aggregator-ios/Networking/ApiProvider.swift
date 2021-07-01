@@ -17,7 +17,7 @@ final class ApiProvider {
         self.networkProvider = NetworkProvider(
             configuration: configuration,
             trustManager: trustManager,
-            rootQueue: DispatchQueue(label: "news_aggregator_api.concurrent.queue"),
+            rootQueue: DispatchQueue(label: "news_aggregator_api.queue"),
             requestInterceptor: requestInterceptor)
     }
 
@@ -32,9 +32,11 @@ final class ApiProvider {
             let response: Swift.Result<[T], ApiError> = dataResponse.dataOrError(parser: parser)
             switch response {
             case let .success(data):
+                print(data)
                 return completion(data, nil)
             
             case let .failure(error):
+                print(error)
                 return completion(nil, error)
             }
         }

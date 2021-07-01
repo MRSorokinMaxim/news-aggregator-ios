@@ -19,10 +19,10 @@ extension TabBarItem {
     private var icon: UIImage? {
         switch self {
         case .news:
-            return nil
+            return UIImage(named: "news_icon")
 
         case .setting:
-            return nil
+            return UIImage(named: "setting_icon")
         }
     }
 

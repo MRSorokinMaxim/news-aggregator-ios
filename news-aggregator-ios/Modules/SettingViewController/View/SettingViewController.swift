@@ -4,7 +4,7 @@ final class SettingViewController: UIViewController, SettingModule {
 
     private let viewModel: SettingViewModel
     private lazy var tableDirector = TableDirector(tableView: rootView.tableView)
-    private let settingBuilder = SettingBuilder()
+    private let settingBuilder: SettingBuilder = SettingBuilderImpl()
     
     private var rootView: SettingView {
         guard let view = self.view as? SettingView else {
