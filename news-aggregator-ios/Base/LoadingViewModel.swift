@@ -15,10 +15,7 @@ extension LoadingViewModel {
         errors = []
 
         dataSource.forEach { closure in
-            downloader.enter()
-            DispatchQueue.global().async(group: downloader) {
-                closure()
-            }
+            closure()
         }
 
         downloader.notify(queue: DispatchQueue.main) { [weak self] in

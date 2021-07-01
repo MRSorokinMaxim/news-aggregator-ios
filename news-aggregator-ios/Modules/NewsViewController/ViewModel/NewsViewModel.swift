@@ -99,10 +99,11 @@ extension NewsViewModelImpl {
     
     func handleResults() {
         state = .rich
-        view?.configureTableViewIfPossible()
+        view?.configureTableView()
     }
     
     private func loadTopHeadlines() {
+        downloader.enter()
         newsService.obtainTopHeadlines { [weak self] topHeadlines, error in
             self?.handleErrorIfNeeded(error)
             self?.topHeadlines = topHeadlines
@@ -110,17 +111,20 @@ extension NewsViewModelImpl {
                 self?.newsStorage.save(articles)
                 self?.updateViewedArticles(articles: articles)
             }
+
             self?.downloader.leave()
         }
     }
     
     private func loadSource() {
+        downloader.enter()
         newsService.obtainSources(completionHandler: { [weak self] sources, error in
             self?.handleErrorIfNeeded(error)
             self?.sources = sources
             if let sources = sources?.sources {
                 self?.sourceStorage.save(sources)
             }
+
             self?.downloader.leave()
         })
     }

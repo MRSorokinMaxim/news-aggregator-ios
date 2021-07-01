@@ -2,10 +2,10 @@ import UIKit
 import TableKit
 
 protocol NewsModuleInput: NewsModule {
-    func configureTableViewIfPossible()
+    func configureTableView()
 }
 
-final class NewsViewController: UIViewController, NewsModuleInput, UIScrollViewDelegate {
+final class NewsViewController: UIViewController, NewsModuleInput {
     private enum LeftBarButtonType {
         case collapse
         case expand
@@ -14,7 +14,7 @@ final class NewsViewController: UIViewController, NewsModuleInput, UIScrollViewD
     var onTapNews: ParameterClosure<URL>?
     
     private let viewModel: NewsViewModel
-    private lazy var tableDirector = TableDirector(tableView: rootView.tableView, scrollDelegate: self)
+    private lazy var tableDirector = TableDirector(tableView: rootView.tableView)
     private let newsBuilder: NewsBuilder = NewsBuilderImpl()
     
     private var leftBarButtonType: LeftBarButtonType = .expand
@@ -61,46 +61,7 @@ final class NewsViewController: UIViewController, NewsModuleInput, UIScrollViewD
         refreshData()
     }
     
-    func configureTableViewIfPossible() {
-        if !isScrollingFast {
-            configureTableView()
-        } else {
-            isImmediatelyUpdatTableView = true
-        }
-    }
-    
-    func scrollViewDidScroll(_ scrollView: UIScrollView) {
-        let currentOffset = scrollView.contentOffset
-        let currentTime = Date.timeIntervalSinceReferenceDate
-        let timeDiff = currentTime - lastOffsetCapture
-        let captureInterval = 0.1
-        
-        if timeDiff > captureInterval {
-            
-            let distance = currentOffset.y - lastOffset.y     // calc distance
-            let scrollSpeedNotAbs = (distance * 10) / 1000     // pixels per ms*10
-            let scrollSpeed = fabsf(Float(scrollSpeedNotAbs))  // absolute value
-            
-            if scrollSpeed > 0.5 {
-                isScrollingFast = true
-            } else {
-                isScrollingFast = false
-                
-                if isImmediatelyUpdatTableView {
-                    configureTableView()
-                }
-            }
-            
-            lastOffset = currentOffset
-            lastOffsetCapture = currentTime
-        }
-    }
-    
-    private func refreshData() {
-        viewModel.loadContent()
-    }
-    
-    private func configureTableView() {
+    func configureTableView() {
         let section: TableSection
         switch leftBarButtonType {
         case .collapse:
@@ -112,6 +73,10 @@ final class NewsViewController: UIViewController, NewsModuleInput, UIScrollViewD
         tableDirector.clear()
             .append(section: section)
             .reload()
+    }
+    
+    private func refreshData() {
+        viewModel.loadContent()
     }
     
     @objc private func barButtonHandle() {
