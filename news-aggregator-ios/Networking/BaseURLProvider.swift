@@ -14,18 +14,10 @@ final class BaseURLProviderImpl: BaseURLProvider {
     
     private let apiNewsSuffix = "v2/"
     
-    private var newsApiServerURL: URL {
-        guard let url = URL(string: ServerApiURL.news.rawValue) else {
-            fatalError("Can't construct newsApiServerURL")
-        }
-
-        return url
-    }
-    
     // MARK: - Public properties
     
     var newsApiURL: URL {
-        guard let url = URL(string: apiNewsSuffix, relativeTo: newsApiServerURL) else {
+        guard let url = URL(string: ServerApiURL.news.rawValue + apiNewsSuffix) else {
             fatalError("Can't construct newsApiURL")
         }
         

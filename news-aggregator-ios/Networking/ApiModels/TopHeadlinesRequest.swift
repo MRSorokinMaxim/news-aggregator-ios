@@ -1,6 +1,6 @@
 import Foundation
 
-final class  TopHeadlinesRequest: Codable {
+final class TopHeadlinesRequest: Codable {
     let country: Country?
     let category: Category?
     let sources: [String]?

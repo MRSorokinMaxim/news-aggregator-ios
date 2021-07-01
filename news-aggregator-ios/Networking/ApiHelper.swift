@@ -1,6 +1,8 @@
 import Foundation
 
 enum ApiHelper {
+
+    // функция для маппинга объекта в параметры запроса
     static func mapValuesToQueryItems(_ source: Codable) -> [URLQueryItem]? {
         let destination = source.toJSON()
             .compactMap { key, value -> URLQueryItem? in
@@ -9,6 +11,8 @@ enum ApiHelper {
                     return URLQueryItem(name: key, value: value)
                 } else if let value = value as? String {
                     return URLQueryItem(name: key, value: value)
+                } else if let value = value as? Int {
+                    return URLQueryItem(name: key, value: String(value))
                 } else {
                     return nil
                 }

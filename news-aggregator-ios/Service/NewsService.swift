@@ -12,7 +12,6 @@ protocol NewsService {
 
 
 final class NewsServiceImpl: NewsService {
-    
     private let apiProvider: ApiProvider
     
     init(apiProvider: ApiProvider) {
@@ -29,16 +28,16 @@ final class NewsServiceImpl: NewsService {
     }
     
     func obtainTopHeadlines(completionHandler: @escaping TopHeadlinesCompletion) {
-        let data = TopHeadlinesRequest()
+        let data = TopHeadlinesRequest(country: .ru, pageSize: 100)
         let endpoint = NewsEndpoint.topHeadlines(data: data)
 
         apiProvider.request(endpoint: endpoint, type: TopHeadlinesResponse.self) { result, error in
-            completionHandler(result?.first, error)
+            completionHandler(result?.first , error)
         }
     }
     
     func obtainSources(completionHandler: @escaping SourcesCompletion) {
-        let data = SourcesRequest()
+        let data = SourcesRequest(country: .ru)
         let endpoint = NewsEndpoint.sources(data: data)
 
         apiProvider.request(endpoint: endpoint, type: SourcesResponse.self) { result, error in

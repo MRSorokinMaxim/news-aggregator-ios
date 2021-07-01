@@ -1,3 +1,3 @@
 import UIKit
 
-final class NewsView: TableRootView {}
+typealias NewsView = TableRootView

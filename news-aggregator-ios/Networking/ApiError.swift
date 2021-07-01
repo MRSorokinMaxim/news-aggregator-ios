@@ -14,7 +14,7 @@ struct ApiError: Error, Codable {
         case rateLimited
         case sourcesTooMany
         case sourceDoesNotExist
-        case unexpectedError
+        case unknownError
         case timeoutError
     }
     
@@ -25,7 +25,7 @@ struct ApiError: Error, Codable {
 
 extension ApiError {
     static var defaultError: ApiError {
-        ApiError(status: .error, code: .unexpectedError, message: "common_unexpected_error".localized)
+        ApiError(status: .error, code: .unknownError, message: "common_unknown_error".localized)
     }
     
     static var timeoutError: ApiError {

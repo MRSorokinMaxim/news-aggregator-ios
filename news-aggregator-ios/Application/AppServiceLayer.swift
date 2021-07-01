@@ -5,6 +5,10 @@ final class AppServiceLayer {
     // MARK: Services
 
     let newsService: NewsService
+    let settingService: SettingService
+    let newsStorage: NewsStorage
+    let sourceStorage: SourceStorage
+    let viewedNewsStorage: ViewedNewsStorage
     
     // MARK: Initialization
     
@@ -20,13 +24,17 @@ final class AppServiceLayer {
         )
         
         let apiProvider = ApiProvider(configuration: configuration,
-                                  trustManager: ServerTrustManager(evaluators: [:]),
-                                  requestInterceptor: requestInterceptor)
+                                      trustManager: ServerTrustManager(evaluators: ["newsapi.org": DefaultTrustEvaluator()]),
+                                      requestInterceptor: requestInterceptor)
         
         newsService = NewsServiceImpl(apiProvider: apiProvider)
+        settingService = SettingServiceImpl()
+        newsStorage = NewsStorageImpl()
+        sourceStorage = SourceStorageImpl()
+        viewedNewsStorage = ViewedNewsStorageImpl()
     }
 }
 
 extension AppServiceLayer {
-    static let timeout = 30.0
+    static let timeout = 10.0
 }

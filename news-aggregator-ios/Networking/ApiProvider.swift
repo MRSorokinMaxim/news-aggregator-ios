@@ -17,16 +17,11 @@ final class ApiProvider {
         self.networkProvider = NetworkProvider(
             configuration: configuration,
             trustManager: trustManager,
-            rootQueue: DispatchQueue(label: "news_aggregator_api.concurrent.queue"),
+            rootQueue: DispatchQueue(label: "news_aggregator_api.queue"),
             requestInterceptor: requestInterceptor)
     }
 
     /// Отправить API запрос по эндпроиту.
-    ///
-    /// - Parameters:
-    ///   - endpoint: Конечная точка запроса.
-    ///   - type: Тип объекта в ответе.
-    ///   - completion: Декодированный результат запроса либо ошибка.
     func request<T>(
         endpoint: Endpoint,
         type: T.Type,
@@ -37,9 +32,11 @@ final class ApiProvider {
             let response: Swift.Result<[T], ApiError> = dataResponse.dataOrError(parser: parser)
             switch response {
             case let .success(data):
+                print(data)
                 return completion(data, nil)
             
             case let .failure(error):
+                print(error)
                 return completion(nil, error)
             }
         }
@@ -65,7 +62,7 @@ private extension AFDataResponse {
             return .failure(.defaultError)
         }
 
-        if let metrics = metrics, metrics.taskInterval.duration < AppServiceLayer.timeout {
+        if let metrics = metrics, metrics.taskInterval.duration > AppServiceLayer.timeout {
             return .failure(.timeoutError)
         }
 

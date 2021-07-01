@@ -1,4 +1,5 @@
 import Foundation
+import UIKit
 
 final class NewsCoordinator: BaseCoordinator {
 
@@ -23,6 +24,11 @@ final class NewsCoordinator: BaseCoordinator {
 
     private func showNewsModule() {
         let module = moduleFactory.createNewsModule(appServiceLayer: appServiceLayer)
+        
+        module.onTapNews = {
+            UIApplication.shared.open($0, options: [:], completionHandler: nil)
+        }
+        
         router.push(module)
     }
 }

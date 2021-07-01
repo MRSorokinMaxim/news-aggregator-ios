@@ -1,10 +1,8 @@
-protocol SettingModule: Presentable {
-    var onFinish: VoidBlock? { get set }
-}
+protocol SettingModule: Presentable {}
 
 extension ModuleFactory {
-    func createSettingModule() -> SettingModule {
-        let viewModel = SettingViewModel()
+    func createSettingModule(appServiceLayer: AppServiceLayer) -> SettingModule {
+        let viewModel = SettingViewModel(settingService: appServiceLayer.settingService)
         let viewController = SettingViewController(viewModel: viewModel)
         
         return viewController

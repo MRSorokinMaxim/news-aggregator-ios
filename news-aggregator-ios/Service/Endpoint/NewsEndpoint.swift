@@ -6,20 +6,14 @@ enum NewsEndpoint: Endpoint {
     case sources(data: SourcesRequest)
     
     func asURLRequest() throws -> URLRequest {
-        guard var components = urlComponents else {
+        guard let components = urlComponents else {
             throw AFError.parameterEncodingFailed(reason: .missingURL)
         }
-
-        let queryItems = components.queryItems?.map { ($0.name, $0.value ?? "") } ?? []
-
-        let parameters = Dictionary(uniqueKeysWithValues: queryItems)
-
-        components.queryItems = nil // will be added by URLEncoding
-
+        
         var request = URLRequest(url: try components.asURL())
         request.httpMethod = HTTPMethod.get.rawValue
-
-        return try URLEncoding.default.encode(request, with: parameters)
+        
+        return request
     }
     
     private var urlComponents: URLComponents? {
@@ -43,7 +37,7 @@ enum NewsEndpoint: Endpoint {
            let parameters = ApiHelper.mapValuesToQueryItems(source) {
             queryItems.append(contentsOf: parameters)
         }
-        
+    
         urlComponents?.queryItems = queryItems
         
         return urlComponents

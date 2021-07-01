@@ -8,7 +8,7 @@ final class ApiRetrier: URLRequestRetrier {
     // MARK: - Constants
     
     private enum Constants {
-        static let maxRetryCount = 3
+        static let maxRetryCount = 2
     }
     
     // MARK: - RequestRetrier
@@ -25,6 +25,6 @@ final class ApiRetrier: URLRequestRetrier {
             return
         }
         
-        completion(.retryWithDelay(TimeInterval(1)))
+        completion(.retryWithDelay(TimeInterval(0.2)))
     }
 }
