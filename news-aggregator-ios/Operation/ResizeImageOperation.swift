@@ -17,6 +17,11 @@ final class ResizeImageOperation: AsyncOperation<Image?, Error> {
         state = .isReady
     }
     
+    deinit {
+        dependencyObservation?.invalidate()
+        dependencyObservation = nil
+    }
+    
     override func start() {
         super.start()
 
