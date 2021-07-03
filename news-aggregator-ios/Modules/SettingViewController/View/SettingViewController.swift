@@ -8,7 +8,7 @@ final class SettingViewController: UIViewController, SettingModule {
     
     private var rootView: SettingView {
         guard let view = self.view as? SettingView else {
-            fatalError("View is not type of NewsView")
+            fatalError("View is not type of SettingView")
         }
         
         return view

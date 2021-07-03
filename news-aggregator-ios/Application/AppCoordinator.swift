@@ -57,6 +57,7 @@ final class AppCoordinator: ScenarioCoordinator<AppScenario> {
         let group = coordinatorFactory.makeTabBarCoordinator(appServiceLayer: appServiceLayer)
 
         group.coordinator.onFinish = { [weak self] in
+            self?.startNextScenarios(afterScenario: .main)
             self?.remove(child: $0)
         }
 
