@@ -36,6 +36,7 @@ final class ImageDownloadService {
     func asyncImageLoad(path: String?,
                         width: CGFloat,
                         tag: Int,
+                        placeholderImageSetterBlock: VoidBlock? = nil,
                         completion: @escaping ParameterClosure<Result<Image?, Error>>) {
         guard let path = path else {
             completion(.failure(ImageDownloadError.imagePathError))
@@ -43,6 +44,7 @@ final class ImageDownloadService {
         }
         
         guard let image = imageCache[path + "\(width)"] else {
+            placeholderImageSetterBlock?()
             startDownloadAndResizeOperation(image: nil,
                                             path: path,
                                             tag: tag,
@@ -115,15 +117,25 @@ final class ImageDownloadService {
 
 extension UIImageView {
 
-    func load(path: String?,
-              width: CGFloat,
+    func load(path: String? = nil,
+              width: CGFloat = 44,
+              placeholderImage: UIImage? = nil,
               downloader: ImageDownloadService = .shared,
               completion: VoidBlock? = nil) {
         let tag = Int.random(in: 1..<100000)
 
         self.tag = tag
         
-        downloader.asyncImageLoad(path: path, width: width, tag: tag) { [weak self] result in
+        let placeholderImageSetterBlock: VoidBlock = { [ weak self] in
+            self?.image = placeholderImage
+        }
+        
+        downloader.asyncImageLoad(
+            path: path,
+            width: width,
+            tag: tag,
+            placeholderImageSetterBlock: placeholderImageSetterBlock
+        ) { [weak self] result in
             switch result {
             case let .success(imageInfo?):
                 guard let tag = self?.tag, tag == imageInfo.tag else {

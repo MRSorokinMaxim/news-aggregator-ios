@@ -19,12 +19,9 @@ final class CollapseNewsCell: UITableViewCell {
         
         textLabel?.numberOfLines = 0
 
-        imageView?.backgroundColor = .systemGray
         imageView?.contentMode = .scaleAspectFill
         imageView?.layer.masksToBounds = true
-        imageView?.image = UIImage(named: "expand_icon")
 
-        resizeImageView()
         bindViews()
     }
 
@@ -32,13 +29,21 @@ final class CollapseNewsCell: UITableViewCell {
         fatalError("init(coder:) has not been implemented")
     }
     
-    private func resizeImageView() {
-        let itemSize = CGSize(width: .imageWidth, height: 44)
-        UIGraphicsBeginImageContextWithOptions(itemSize, false, UIScreen.main.scale)
-        let imageRect = CGRect(x: 0, y: 0, width: itemSize.width, height: itemSize.height)
-        imageView?.image?.draw(in: imageRect)
-        imageView?.image = UIGraphicsGetImageFromCurrentImageContext()
-        UIGraphicsEndImageContext()
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        
+        guard let imageView = imageView,
+              let textLabel = textLabel else {
+            return
+        }
+        
+        imageView.frame = CGRect(x: 16, y: 0, width: .imageWidth, height: 44)
+        imageView.center.y = textLabel.center.y
+        
+        textLabel.frame.origin = CGPoint(x: imageView.frame.minX + imageView.frame.width + 16,
+                                         y: 0)
+        textLabel.frame.size = CGSize(width: frame.width - 16 - textLabel.frame.origin.x,
+                                      height: textLabel.frame.size.height)
     }
     
     private func bindViews() {
@@ -58,7 +63,11 @@ extension CollapseNewsCell: ConfigurableCell {
         
         if let iconPath = viewModel.iconPath {
             let imageWidth = imageView?.frame.width ?? .imageWidth
-            imageView?.load(path: iconPath, width: imageWidth)
+            imageView?.load(
+                path: iconPath,
+                width: imageWidth,
+                placeholderImage: UIImage(named: "stub_icon")
+            )
         }
     }
 }
