@@ -28,8 +28,8 @@ final class ImageDownloadService {
         }
         set {
             imageLock.lock()
-            defer { imageLock.unlock() }
             imageObservations = newValue
+            imageLock.unlock()
         }
     }
     
@@ -84,22 +84,22 @@ final class ImageDownloadService {
 
         let observable = resizeImageOperation
             .observe(onSuccess: { [weak self] infoImage in
-                OperationQueue.main.addOperation {
-                    guard let infoImage = infoImage else {
-                        completion(.failure(ImageDownloadError.unknowed))
-                        return
-                    }
-                    
-                    self?.imageCache[path + "\(width)"] = infoImage.image
-
-                    completion(.success(infoImage))
-                    self?.removeObservable(with: hash)
+                guard let infoImage = infoImage else {
+                    completion(.failure(ImageDownloadError.unknowed))
+                    return
                 }
+                
+                self?.imageCache[path + "\(width)"] = infoImage.image
+                
+                OperationQueue.main.addOperation {
+                    completion(.success(infoImage))
+                }
+                self?.removeObservable(with: hash)
             }, onFailure: { [weak self] error in
                 OperationQueue.main.addOperation {
                     completion(.failure(error))
-                    self?.removeObservable(with: hash)
                 }
+                self?.removeObservable(with: hash)
             })
         
         imageObservationsLock[hash] = observable
@@ -108,9 +108,8 @@ final class ImageDownloadService {
     }
     
     func removeObservable(with hash: Int) {
-        DispatchQueue.global().async { [weak self] in
-            self?.imageObservationsLock.removeValue(forKey: hash)
-        }
+        imageObservationsLock[hash]?.invalidate()
+        imageObservationsLock.removeValue(forKey: hash)
     }
 }
 
