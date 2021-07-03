@@ -303,7 +303,6 @@
 				6D8A36ED267BA359001A10E2 /* Coordinators */,
 				6D8A36EE267BA363001A10E2 /* Modules */,
 				6D37390F267D30BA0004E542 /* Networking */,
-				6D8AC936268A75A700492F90 /* Operation */,
 				6D3738FC267D30310004E542 /* Service */,
 				6D7B63752685107300508033 /* Storage */,
 				6D8A36F7267BA3B2001A10E2 /* Helper */,
@@ -453,6 +452,7 @@
 			isa = PBXGroup;
 			children = (
 				6D373905267D30650004E542 /* Endpoint */,
+				6D8AC936268A75A700492F90 /* Operation */,
 				6D373900267D304A0004E542 /* NewsService.swift */,
 				6D7B636C26850C3500508033 /* SettingService.swift */,
 				6DA202DA268A560A0094D323 /* ImageDownloadService.swift */,
